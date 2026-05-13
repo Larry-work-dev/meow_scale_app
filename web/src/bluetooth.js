@@ -17,9 +17,13 @@ class BluetoothManager {
   async requestDevice() {
     try {
       this.device = await navigator.bluetooth.requestDevice({
-        filters: this.filters,
-        optionalServices: [0xFFE0],
-      });
+        filters: [
+        { namePrefix: "HC-08" }
+      ],
+      optionalServices: [
+        '0000ffe0-0000-1000-8000-00805f9b34fb'
+      ]
+    });
       this.device.addEventListener('gattserverdisconnected', () => {
         this.isConnected = false;
         if (this.onConnectionChanged) this.onConnectionChanged(false);
