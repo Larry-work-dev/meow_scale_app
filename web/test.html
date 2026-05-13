@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bluetooth Simulator Test</title>
+  <style>
+    body {
+      font-family: monospace;
+      background: #1a1a1a;
+      color: #d4a574;
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
+    .container {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid #d4a574;
+      border-radius: 8px;
+      padding: 20px;
+      backdrop-filter: blur(10px);
+    }
+    
+    h1 {
+      margin-top: 0;
+      text-align: center;
+    }
+    
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    
+    button {
+      padding: 10px 20px;
+      background: #d4a574;
+      color: #000;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s;
+    }
+    
+    button:hover {
+      background: #c4914d;
+    }
+    
+    button:disabled {
+      background: #666;
+      cursor: not-allowed;
+    }
+    
+    .status {
+      padding: 10px;
+      margin-bottom: 15px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.1);
+    }
+    
+    .status.connected {
+      border-left: 4px solid #4ade80;
+    }
+    
+    .status.disconnected {
+      border-left: 4px solid #666;
+    }
+    
+    .data-display {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 15px;
+      border-radius: 6px;
+      margin-bottom: 15px;
+      max-height: 300px;
+      overflow-y: auto;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    
+    .data-row {
+      display: grid;
+      grid-template-columns: 100px 1fr;
+      gap: 10px;
+      padding: 5px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .timestamp {
+      color: #999;
+    }
+    
+    .csv-data {
+      color: #4ade80;
+      font-family: monospace;
+      word-break: break-all;
+    }
+    
+    .alert-data {
+      color: #fbbf24;
+    }
+    
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 15px;
+    }
+    
+    .stat-box {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 10px;
+      border-radius: 6px;
+      border-left: 3px solid #d4a574;
+    }
+    
+    .stat-label {
+      font-size: 11px;
+      color: #999;
+      margin-bottom: 5px;
+    }
+    
+    .stat-value {
+      font-size: 18px;
+      font-weight: bold;
+      color: #d4a574;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>☕ Bluetooth Simulator Test</h1>
+    
+    <div class="status disconnected" id="status">
+      🔴 Disconnected
+    </div>
+    
+    <div class="controls">
+      <button id="connectBtn" onclick="handleConnect()">Connect Simulator</button>
+      <button id="disconnectBtn" onclick="handleDisconnect()" disabled>Disconnect</button>
+      <button id="tareBtn" onclick="handleTare()" disabled>Send TARE</button>
+      <button id="clearBtn" onclick="clearData()">Clear Data</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat-box">
+        <div class="stat-label">Messages Received</div>
+        <div class="stat-value" id="messageCount">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Current Weight (g)</div>
+        <div class="stat-value" id="currentWeight">0.0</div>
+      </div>
+    </div>
+
+    <h3>Raw Data Stream:</h3>
+    <div class="data-display" id="dataDisplay"></div>
+  </div>
+
+  <script type="module">
+    import BluetoothSimulator from './src/simulator.js';
+
+    let simulator = null;
+    let messageCount = 0;
+    let latestWeight = 0;
+    
+    window.handleConnect = function() {
+      if (simulator) return;
+      
+      simulator = new BluetoothSimulator();
+      
+      simulator.onDataReceived = (data) => {
+        messageCount++;
+        displayData(data);
+        
+        // Parse weight from CSV if present
+        if (data.includes(',')) {
+          const values = data.trim().split(',');
+          if (values.length > 0) {
+            latestWeight = parseFloat(values[values.length - 1]);
+          }
+        }
+        
+        // Update stats
+        document.getElementById('messageCount').textContent = messageCount;
+        document.getElementById('currentWeight').textContent = latestWeight.toFixed(1);
+      };
+      
+      simulator.onConnectionChanged = (connected) => {
+        const status = document.getElementById('status');
+        if (connected) {
+          status.className = 'status connected';
+          status.textContent = '🟢 Connected (Simulator)';
+          document.getElementById('connectBtn').disabled = true;
+          document.getElementById('disconnectBtn').disabled = false;
+          document.getElementById('tareBtn').disabled = false;
+        } else {
+          status.className = 'status disconnected';
+          status.textContent = '🔴 Disconnected';
+          document.getElementById('connectBtn').disabled = false;
+          document.getElementById('disconnectBtn').disabled = true;
+          document.getElementById('tareBtn').disabled = true;
+        }
+      };
+      
+      simulator.connect();
+      console.log('✅ Simulator connected');
+    };
+    
+    window.handleDisconnect = function() {
+      if (simulator) {
+        simulator.disconnect();
+        simulator = null;
+        console.log('✅ Simulator disconnected');
+      }
+    };
+    
+    window.handleTare = function() {
+      if (simulator) {
+        simulator.handleTare();
+        console.log('✅ Tare command sent');
+      }
+    };
+    
+    window.clearData = function() {
+      document.getElementById('dataDisplay').innerHTML = '';
+      messageCount = 0;
+      document.getElementById('messageCount').textContent = '0';
+      console.log('✅ Data cleared');
+    };
+    
+    function displayData(data) {
+      const display = document.getElementById('dataDisplay');
+      const timestamp = new Date().toLocaleTimeString();
+      
+      const row = document.createElement('div');
+      row.className = 'data-row';
+      
+      const timeEl = document.createElement('div');
+      timeEl.className = 'timestamp';
+      timeEl.textContent = timestamp;
+      
+      const dataEl = document.createElement('div');
+      if (data.includes('ALERT') || data.includes('TARE') || data.includes('TIMER')) {
+        dataEl.className = 'alert-data';
+      } else {
+        dataEl.className = 'csv-data';
+      }
+      dataEl.textContent = data.replace('\n', '');
+      
+      row.appendChild(timeEl);
+      row.appendChild(dataEl);
+      
+      // Add to top of display
+      display.insertBefore(row, display.firstChild);
+      
+      // Keep only last 50 messages
+      while (display.children.length > 50) {
+        display.removeChild(display.lastChild);
+      }
+    }
+    
+    // Expose for debugging
+    window.simulator = simulator;
+  </script>
+</body>
+</html>

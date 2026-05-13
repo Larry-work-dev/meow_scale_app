@@ -1,46 +1,79 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
-
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
-  <base href="$FLUTTER_BASE_HREF">
-
   <meta charset="UTF-8">
-  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
-
-  <!-- iOS meta tags & icons -->
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="meow_scale_app">
-  <link rel="apple-touch-icon" href="icons/Icon-192.png">
-
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="favicon.png"/>
-
-  <title>meow_scale_app</title>
-  <link rel="manifest" href="manifest.json">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1a1a1a">
+  <title>Coffee Scale</title>
+  <link rel="stylesheet" href="index.css">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
+  <div class="app-container">
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <div class="status-content">
+        <span class="status-indicator disconnected" id="status-indicator"></span>
+        <span class="status-text" id="status-text">Disconnected</span>
+      </div>
+      <button id="simulator-btn" class="btn-connect" title="Test without hardware">Simulator</button>
+      <button id="connect-btn" class="btn-connect">Connect</button>
+    </div>
 
-    For more details:
-    * https://docs.flutter.dev/platform-integration/web/initialization
-  -->
-  <script src="flutter_bootstrap.js" async></script>
+    <!-- Weight Display -->
+    <div class="weight-display">
+      <div class="weight-value-container">
+        <span class="weight-value" id="weight-value">0.0</span>
+      </div>
+      <div class="weight-unit-toggle">
+        <button class="unit-btn active" data-unit="g">g</button>
+        <button class="unit-btn" data-unit="kg">kg</button>
+      </div>
+    </div>
+
+    <!-- Timer Display -->
+    <div class="timer-section">
+      <div class="timer-display" id="timer-display">00:00</div>
+      <div class="timer-controls">
+        <button id="timer-toggle-btn" class="btn-control">▶ Start</button>
+        <button id="timer-reset-btn" class="btn-control">↻ Reset</button>
+      </div>
+    </div>
+
+    <!-- Flow Rate Display -->
+    <div class="flow-rate-section">
+      <div class="flow-rate-label">Flow Rate</div>
+      <div class="flow-rate-value" id="flow-rate-value">0.00</div>
+      <div class="flow-rate-unit">g/s</div>
+    </div>
+
+    <!-- Flow Rate Chart -->
+    <div class="chart-container">
+      <canvas id="flow-chart"></canvas>
+    </div>
+
+    <!-- Main Controls -->
+    <div class="controls-section">
+      <button id="tare-btn" class="btn-primary">Tare</button>
+    </div>
+
+    <!-- Notifications -->
+    <div id="notification-container" class="notification-container"></div>
+
+    <!-- Bluetooth Modal -->
+    <div id="bluetooth-modal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Select Device</h2>
+          <button class="modal-close" onclick="this.closest('.modal').style.display='none'">✕</button>
+        </div>
+        <div id="device-list" class="device-list"></div>
+        <button id="scan-again-btn" class="btn-modal">Scan Again</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+  <script type="module" src="src/main.js"></script>
 </body>
 </html>
